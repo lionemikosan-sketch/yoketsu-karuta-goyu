@@ -276,11 +276,10 @@ table.list{width:100%;border-collapse:collapse;font-size:15px}
 
       <details class="group" id="opts">
         <summary>細かい設定</summary>
-        <div class="opt"><span>読み上げ音声</span><div class="seg" data-key="voice"><button type="button" data-v="on">あり</button><button type="button" data-v="off">なし（文字だけ）</button></div></div>
+        <div class="opt"><span>読み上げ音声</span><div class="seg" data-key="voice"><button type="button" data-v="on">あり（音だけで取る）</button><button type="button" data-v="off">なし（音が出せない時用：文字で読む）</button></div></div>
         <div class="opt"><span>声</span><select id="sel-voice" aria-label="読み上げの声"><option value="">自動（日本語）</option></select></div>
-        <div class="opt"><span>読む速さ <b id="rate-v"></b></span><input type="range" id="in-rate" min="0.6" max="1.4" step="0.1" aria-label="読む速さ"></div>
+        <div class="opt"><span>読む速さ <b id="rate-v"></b></span><input type="range" id="in-rate" min="0.5" max="1.2" step="0.1" aria-label="読む速さ"></div>
         <div class="opt"><span></span><div class="row"><button type="button" class="ghost" id="btn-test">声を試す</button></div></div>
-        <div class="opt"><span>読み札の文字</span><div class="seg" data-key="yomi"><button type="button" data-v="hide">音だけ（取った後に出す）</button><button type="button" data-v="show">読む時から画面に出す</button></div></div>
         <div class="opt"><span>経絡名の後の間</span><div class="seg" data-key="pause"><button type="button" data-v="0.6">短め</button><button type="button" data-v="1">ふつう</button><button type="button" data-v="1.6">長め</button></div></div>
         <div class="opt"><span>札の並び</span><div class="seg" data-key="arrange"><button type="button" data-v="shuffle">ばらばら</button><button type="button" data-v="fixed">井→合の順</button></div></div>
         <div class="opt"><span>取った札</span><div class="seg" data-key="keep"><button type="button" data-v="remove">場から消える</button><button type="button" data-v="keep">残す（難しい）</button></div></div>
@@ -376,11 +375,15 @@ const READ_LABEL = {name:'経穴名',yoketsu:'要穴名',gogyo:'五行穴',mix:'
 // ===== 保存 =====
 const LSKEY = 'yoketsu-karuta:v1';
 const DEF = {players:'1',opp:'none',name1:'',name2:'',mers:MER.map(m=>m.id),order:'flow',read:'name',
-  voice:'on',voiceURI:'',rate:1,yomi:'hide',pause:'1',arrange:'shuffle',keep:'remove',furi:'off',penalty:'3',se:'on'};
+  voice:'on',voiceURI:'',rate:0.8,pause:'1',arrange:'shuffle',keep:'remove',furi:'off',penalty:'3',se:'on'};
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(LSKEY) || '{}');
-    return {settings:Object.assign({},DEF,s.settings||{}),records:s.records||[],history:s.history||[],stats:s.stats||{}};
+    const settings = Object.assign({},DEF,s.settings||{});
+    if ((settings.v || 0) < 2){ // 第2版：読む速さを ×0.8 に下げ、音声ありを既定に戻す
+      settings.rate = DEF.rate; settings.voice = 'on'; delete settings.text; delete settings.yomi; settings.v = 2;
+    }
+    return {settings,records:s.records||[],history:s.history||[],stats:s.stats||{}};
   }catch(e){ return {settings:{...DEF},records:[],history:[],stats:{}}; }
 }
 const store = load();
@@ -655,7 +658,8 @@ function nextRead(){
   const type = G.s.read === 'mix' ? ['name','yoketsu','gogyo'][Math.floor(Math.random()*3)] : G.s.read;
   const ph = phrase(st.m, k, type);
   G.cur = {k, type, ...ph, locked:[false,false], done:false, t0:now(), fh:[0,0], cpuT:null};
-  const textOn = G.s.yomi === 'show' || G.s.voice !== 'on' || !hasTTS;
+  // 音声で読むときは、取り終わるまで読み札の文字を一切出さない
+  const textOn = G.s.voice !== 'on' || !hasTTS;
   setYomi(textOn ? esc(ph.text) : '<span class="wait">読み上げ中…</span>');
   G.accepting = true; G.running = true;
   const cur = G.cur;
