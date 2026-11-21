@@ -280,7 +280,8 @@ table.list{width:100%;border-collapse:collapse;font-size:15px}
         <div class="opt"><span>声</span><select id="sel-voice" aria-label="読み上げの声"><option value="">自動（日本語）</option></select></div>
         <div class="opt"><span>読む速さ <b id="rate-v"></b></span><input type="range" id="in-rate" min="0.6" max="1.4" step="0.1" aria-label="読む速さ"></div>
         <div class="opt"><span></span><div class="row"><button type="button" class="ghost" id="btn-test">声を試す</button></div></div>
-        <div class="opt"><span>読み札の文字</span><div class="seg" data-key="text"><button type="button" data-v="show">画面にも出す</button><button type="button" data-v="hide">音だけ（取った後に出す）</button></div></div>
+        <div class="opt"><span>読み札の文字</span><div class="seg" data-key="yomi"><button type="button" data-v="hide">音だけ（取った後に出す）</button><button type="button" data-v="show">読む時から画面に出す</button></div></div>
+        <div class="opt"><span>経絡名の後の間</span><div class="seg" data-key="pause"><button type="button" data-v="0.6">短め</button><button type="button" data-v="1">ふつう</button><button type="button" data-v="1.6">長め</button></div></div>
         <div class="opt"><span>札の並び</span><div class="seg" data-key="arrange"><button type="button" data-v="shuffle">ばらばら</button><button type="button" data-v="fixed">井→合の順</button></div></div>
         <div class="opt"><span>取った札</span><div class="seg" data-key="keep"><button type="button" data-v="remove">場から消える</button><button type="button" data-v="keep">残す（難しい）</button></div></div>
         <div class="opt"><span>ふりがな</span><div class="seg" data-key="furi"><button type="button" data-v="off">なし</button><button type="button" data-v="on">あり</button></div></div>
@@ -375,7 +376,7 @@ const READ_LABEL = {name:'経穴名',yoketsu:'要穴名',gogyo:'五行穴',mix:'
 // ===== 保存 =====
 const LSKEY = 'yoketsu-karuta:v1';
 const DEF = {players:'1',opp:'none',name1:'',name2:'',mers:MER.map(m=>m.id),order:'flow',read:'name',
-  voice:'on',voiceURI:'',rate:1,text:'show',arrange:'shuffle',keep:'remove',furi:'off',penalty:'3',se:'on'};
+  voice:'on',voiceURI:'',rate:1,yomi:'hide',pause:'1',arrange:'shuffle',keep:'remove',furi:'off',penalty:'3',se:'on'};
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(LSKEY) || '{}');
@@ -450,23 +451,41 @@ function pickVoice(){
     || jaVoices.find(v => /Kyoko|O-ren|Otoya|Google/i.test(v.name)) || jaVoices[0];
 }
 const estMs = text => text.length * 150 / (S().rate || 1) + 350;
+const pauseMs = () => Number(S().pause || 1) * 1000;
 let speakSeq = 0;
-function speak(text, {onstart, onend} = {}){
-  const id = ++speakSeq;
+// 1つの発声。onstart/onend は一度だけ呼ぶ（来ない端末向けの保険つき）
+function speakOne(text, id, onstart, onend){
   let started = false, ended = false;
   const st = () => { if (started || id !== speakSeq) return; started = true; onstart && onstart(); };
-  const fin = () => { if (ended || id !== speakSeq) return; ended = true; st(); onend && onend(); };
+  const fin = () => { if (ended || id !== speakSeq) return; ended = true; started = true; onend && onend(); };
   if (!hasTTS || S().voice !== 'on'){ st(); setTimeout(fin, estMs(text)); return; }
   try{
-    speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ja-JP'; u.rate = S().rate || 1; u.pitch = 1;
     const v = pickVoice(); if (v) u.voice = v;
     u.onstart = st; u.onend = fin; u.onerror = fin;
-    setTimeout(() => speechSynthesis.speak(u), 40);
-    setTimeout(() => { started = true; }, 1200); // onstart が来ない端末では読み始めの時刻のまま計る
-    setTimeout(fin, estMs(text) + 2500);     // onend が来ない端末向け
+    speechSynthesis.speak(u);
+    setTimeout(() => { started = true; }, 1200); // onstart が来ない端末では、その時点の時刻のまま計る
+    setTimeout(fin, estMs(text) + 2500);         // onend が来ない端末向け
   }catch(e){ st(); setTimeout(fin, estMs(text)); }
+}
+// 読み札を区切りごとに読む。経絡名の後に一呼吸（設定の「間」）を置く
+function speak(parts, {onpart, onend} = {}){
+  if (typeof parts === 'string') parts = [parts];
+  const id = ++speakSeq;
+  let i = 0;
+  const run = () => {
+    if (id !== speakSeq) return;
+    const idx = i;
+    speakOne(parts[idx], id, () => onpart && onpart(idx), () => {
+      if (id !== speakSeq) return;
+      i++;
+      if (i < parts.length) setTimeout(run, pauseMs());
+      else onend && onend();
+    });
+  };
+  try{ hasTTS && speechSynthesis.cancel(); }catch(e){}
+  setTimeout(run, 40);
 }
 function primeSpeech(){ // iPadは最初の発声をタップの中で行う必要がある
   if (!hasTTS || S().voice !== 'on') return;
@@ -474,9 +493,9 @@ function primeSpeech(){ // iPadは最初の発声をタップの中で行う必�
 }
 function phrase(m, k, type){
   const p = m.pts[k];
-  if (type === 'yoketsu') return {text:`${m.name}の${YO[k]}`, speech:`${m.kana}の、${YOK[k]}`};
-  if (type === 'gogyo'){ const g = gy(m,k); return {text:`${m.name}の${g}穴`, speech:`${m.kana}の、${GK[g]}`}; }
-  return {text:`${m.name}、${p.n}`, speech:`${m.kana}、${p.r}`};
+  if (type === 'yoketsu') return {text:`${m.name}の${YO[k]}`, speech:[`${m.kana}の`, YOK[k]]};
+  if (type === 'gogyo'){ const g = gy(m,k); return {text:`${m.name}の${g}穴`, speech:[`${m.kana}の`, GK[g]]}; }
+  return {text:`${m.name}、${p.n}`, speech:[m.kana, p.r]};
 }
 
 // ===== メニュー =====
@@ -512,7 +531,7 @@ $('#in-name1').oninput = e => { S().name1 = e.target.value; save(); };
 $('#in-name2').oninput = e => { S().name2 = e.target.value; save(); };
 $('#btn-test').onclick = () => {
   if (!hasTTS){ $('#menu-note').textContent = 'このブラウザは読み上げに対応していません。文字表示で遊べます。'; return; }
-  const was = S().voice; S().voice = 'on'; speak('てのたいいんはいけい、しゃくたく'); S().voice = was;
+  const was = S().voice; S().voice = 'on'; speak(['てのたいいんはいけい', 'しゃくたく']); S().voice = was;
 };
 $('#btn-start').onclick = () => {
   if (!S().mers.length){ $('#menu-note').textContent = '経絡を一つ以上選んでください。'; return; }
@@ -636,12 +655,13 @@ function nextRead(){
   const type = G.s.read === 'mix' ? ['name','yoketsu','gogyo'][Math.floor(Math.random()*3)] : G.s.read;
   const ph = phrase(st.m, k, type);
   G.cur = {k, type, ...ph, locked:[false,false], done:false, t0:now(), fh:[0,0], cpuT:null};
-  const textOn = G.s.text === 'show' || G.s.voice !== 'on' || !hasTTS;
+  const textOn = G.s.yomi === 'show' || G.s.voice !== 'on' || !hasTTS;
   setYomi(textOn ? esc(ph.text) : '<span class="wait">読み上げ中…</span>');
   G.accepting = true; G.running = true;
   const cur = G.cur;
+  // タイムは「札を決める言葉（ツボ名・要穴名）」の読み始めから計る。経絡名と一呼吸の分は含めない
   speak(ph.speech, {
-    onstart: () => { if (G && G.cur === cur && !cur.done && !cur.tapped) cur.t0 = now(); },
+    onpart: i => { if (G && G.cur === cur && !cur.done && !cur.tapped && i === ph.speech.length - 1) cur.t0 = now(); },
     onend: () => { if (G && G.cur === cur && !cur.done && G.cpu) scheduleCpu(cur); },
   });
 }
