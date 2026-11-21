@@ -267,9 +267,9 @@ table.list{width:100%;border-collapse:collapse;font-size:15px}
       <div class="group">
         <h2>読み方</h2>
         <div class="seg col" data-key="read">
-          <button type="button" data-v="name">経穴名で読む<small>「手の太陰肺経、尺沢」→ 尺沢を取る</small></button>
-          <button type="button" data-v="yoketsu">要穴名で読む<small>「手の太陰肺経の合穴」→ 尺沢を取る</small></button>
-          <button type="button" data-v="gogyo">五行穴で読む<small>「手の太陰肺経の水穴」→ 尺沢を取る</small></button>
+          <button type="button" data-v="std">五兪穴＋五行で読む（大会と同じ）<small>「手の太陰肺経　合水穴」→ 尺沢を取る</small></button>
+          <button type="button" data-v="yoketsu">五兪穴だけで読む<small>「手の太陰肺経　合穴」→ 尺沢を取る</small></button>
+          <button type="button" data-v="gogyo">五行だけで読む（難しい）<small>「手の太陰肺経　水穴」→ 尺沢を取る</small></button>
           <button type="button" data-v="mix">ミックス<small>上の3つを毎回ランダムに</small></button>
         </div>
       </div>
@@ -291,7 +291,8 @@ table.list{width:100%;border-collapse:collapse;font-size:15px}
       <details class="group">
         <summary>遊び方</summary>
         <div class="rules">
-          <p>場には一つの経絡の<b>井・栄・兪・経・合</b>の五枚が並びます。読み上げを聞いて、当てはまる札をできるだけ早くタップします。五枚取り終わると次の経絡に進みます。</p>
+          <p>読み札は日本鍼灸師会の要穴カルタ大会や市販の『経穴かるた』と同じ形です。「手の太陰肺経」と経絡名を読み、一呼吸おいて「井木穴」と五兪穴を読みます。取り札には穴名（少商）だけが書いてあり、読み札の文字は取り終わるまで画面に出ません。</p>
+          <p>場には一つの経絡の<b>井・栄・兪・経・合</b>の五枚が並びます。読み上げを聞いて、当てはまる札をできるだけ早くタップします。五枚取り終わると次の経絡に進みます。五行は陰経が井木・栄火・兪土・経金・合水、陽経が井金・栄水・兪木・経火・合土です。</p>
           <p><b>1人・タイムアタック</b>：読み始めから正しい札を取るまでの時間を合計します。お手付きは設定した秒数が足されます。記録は経絡の範囲・読み方・札の扱いごとに自己ベストとして残ります。</p>
           <p><b>CPUと対戦／2人で対戦</b>：先に正しい札を取った方の一枚。お手付きをすると、その読みではもう取れません。二人ともお手付きなら、その札は流れます。取った枚数の多い方が勝ちです。</p>
           <p>2人対戦は、iPadを机に置いて向かい合わせで遊びます。奥の人の札と文字は逆さに表示されます。</p>
@@ -368,13 +369,16 @@ const YOS = ['井','栄','兪','経','合'];
 const YOK = ['せいけつ','えいけつ','ゆけつ','けいけつ','ごうけつ'];
 const GY_YIN = ['木','火','土','金','水'], GY_YANG = ['金','水','木','火','土'];
 const GK = {木:'もくけつ',火:'かけつ',土:'どけつ',金:'きんけつ',水:'すいけつ'};
+const YOKP = ['せい','えい','ゆ','けい','ごう'];                 // 井木穴＝せい＋もく＋けつ
+const GKP = {木:'もく',火:'か',土:'ど',金:'きん',水:'すい'};
+const fullName = (m,k) => `${YOS[k]}${gy(m,k)}穴`;               // 例：井木穴・合土穴
 const gy = (m,k) => (m.yin ? GY_YIN : GY_YANG)[k];
 const CPU = {easy:{base:2600,jit:1400,label:'やさしい'}, normal:{base:1500,jit:800,label:'ふつう'}, hard:{base:700,jit:450,label:'つよい'}};
-const READ_LABEL = {name:'経穴名',yoketsu:'要穴名',gogyo:'五行穴',mix:'ミックス'};
+const READ_LABEL = {std:'井木穴（大会形式）',yoketsu:'井穴（五兪のみ）',gogyo:'木穴（五行のみ）',mix:'ミックス',name:'経穴名（旧）'};
 
 // ===== 保存 =====
 const LSKEY = 'yoketsu-karuta:v1';
-const DEF = {players:'1',opp:'none',name1:'',name2:'',mers:MER.map(m=>m.id),order:'flow',read:'name',
+const DEF = {players:'1',opp:'none',name1:'',name2:'',mers:MER.map(m=>m.id),order:'flow',read:'std',
   voice:'on',voiceURI:'',rate:0.8,pause:'1',arrange:'shuffle',keep:'remove',furi:'off',penalty:'3',se:'on'};
 function load(){
   try{
@@ -382,6 +386,10 @@ function load(){
     const settings = Object.assign({},DEF,s.settings||{});
     if ((settings.v || 0) < 2){ // 第2版：読む速さを ×0.8 に下げ、音声ありを既定に戻す
       settings.rate = DEF.rate; settings.voice = 'on'; delete settings.text; delete settings.yomi; settings.v = 2;
+    }
+    if (settings.v < 3){ // 第3版：ツボ名で読むモードを廃止し、大会形式（経絡名＋井木穴）を既定に
+      if (!['std','yoketsu','gogyo','mix'].includes(settings.read)) settings.read = 'std';
+      settings.v = 3;
     }
     return {settings,records:s.records||[],history:s.history||[],stats:s.stats||{}};
   }catch(e){ return {settings:{...DEF},records:[],history:[],stats:{}}; }
@@ -495,10 +503,11 @@ function primeSpeech(){ // iPadは最初の発声をタップの中で行う必�
   try{ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang='ja-JP'; speechSynthesis.speak(u); }catch(e){}
 }
 function phrase(m, k, type){
-  const p = m.pts[k];
-  if (type === 'yoketsu') return {text:`${m.name}の${YO[k]}`, speech:[`${m.kana}の`, YOK[k]]};
-  if (type === 'gogyo'){ const g = gy(m,k); return {text:`${m.name}の${g}穴`, speech:[`${m.kana}の`, GK[g]]}; }
-  return {text:`${m.name}、${p.n}`, speech:[m.kana, p.r]};
+  // 読み札：経絡名 →（一呼吸）→ 穴の種類。穴名そのものは読まない
+  const g = gy(m,k);
+  if (type === 'yoketsu') return {text:`${m.name}　${YO[k]}`, speech:[m.kana, YOK[k]]};
+  if (type === 'gogyo') return {text:`${m.name}　${g}穴`, speech:[m.kana, GK[g]]};
+  return {text:`${m.name}　${fullName(m,k)}`, speech:[m.kana, YOKP[k] + GKP[g] + 'けつ']};
 }
 
 // ===== メニュー =====
@@ -534,7 +543,7 @@ $('#in-name1').oninput = e => { S().name1 = e.target.value; save(); };
 $('#in-name2').oninput = e => { S().name2 = e.target.value; save(); };
 $('#btn-test').onclick = () => {
   if (!hasTTS){ $('#menu-note').textContent = 'このブラウザは読み上げに対応していません。文字表示で遊べます。'; return; }
-  const was = S().voice; S().voice = 'on'; speak(['てのたいいんはいけい', 'しゃくたく']); S().voice = was;
+  const was = S().voice; S().voice = 'on'; speak(['てのたいいんはいけい', 'せいもくけつ']); S().voice = was;
 };
 $('#btn-start').onclick = () => {
   if (!S().mers.length){ $('#menu-note').textContent = '経絡を一つ以上選んでください。'; return; }
@@ -608,7 +617,7 @@ function renderBoards(){
       b.type = 'button'; b.className = 'card deal'; b.dataset.k = k;
       b.style.setProperty('--d', (i * 70) + 'ms');
       b.setAttribute('aria-label', pt.n);
-      b.innerHTML = `<span class="nm">${furi ? `<ruby>${pt.n}<rt>${pt.r}</rt></ruby>` : pt.n}</span><span class="tag">${YO[k]}・${gy(m,k)}</span>`;
+      b.innerHTML = `<span class="nm">${furi ? `<ruby>${pt.n}<rt>${pt.r}</rt></ruby>` : pt.n}</span><span class="tag">${fullName(m,k)}</span>`;
       b.addEventListener('pointerdown', e => { e.preventDefault(); tap(p, k, b); });
       b.addEventListener('click', e => { if (e.detail === 0) tap(p, k, b); });
       b.addEventListener('animationend', () => b.classList.remove('deal','miss'));
@@ -655,7 +664,7 @@ function nextRead(){
   const st = G.stage; st.ri++;
   if (st.ri >= 5) return later(400, nextStage);
   const k = st.reads[st.ri];
-  const type = G.s.read === 'mix' ? ['name','yoketsu','gogyo'][Math.floor(Math.random()*3)] : G.s.read;
+  const type = G.s.read === 'mix' ? ['std','yoketsu','gogyo'][Math.floor(Math.random()*3)] : G.s.read;
   const ph = phrase(st.m, k, type);
   G.cur = {k, type, ...ph, locked:[false,false], done:false, t0:now(), fh:[0,0], cpuT:null};
   // 音声で読むときは、取り終わるまで読み札の文字を一切出さない
@@ -719,7 +728,7 @@ function resolve(who){
     r.n++; r.miss += (cur.fh[0] > 0 || who !== 0) ? 1 : 0;
     if (who === 0){ r.took++; r.ms += ms; }
   }
-  setYomi(`${esc(cur.text)}<small style="margin-left:14px;margin-right:0">${YO[cur.k]}・${gy(m,cur.k)}</small>`);
+  setYomi(`${esc(cur.text)}<small style="margin-left:14px;margin-right:6px">→</small>${m.pts[cur.k].n}`);
   if (who === null) flash(0, '流れ'), G.two && flash(1, '流れ');
   else { seTake(); flash(who, G.ta ? fmt(ms) : '取った！', true); }
   updateBars();
