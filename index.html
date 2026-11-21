@@ -277,6 +277,15 @@ table.list{width:100%;border-collapse:collapse;font-size:15px}
       </div>
 
       <div class="group">
+        <h2>一度に並べる経絡</h2>
+        <div class="seg" data-key="group">
+          <button type="button" data-v="1">1経絡<small>5枚</small></button>
+          <button type="button" data-v="2">2経絡<small>10枚・経絡名もよく聞く</small></button>
+          <button type="button" data-v="3">3経絡<small>15枚</small></button>
+        </div>
+      </div>
+
+      <div class="group">
         <h2>読み方</h2>
         <div class="seg col" data-key="read">
           <button type="button" data-v="std">五兪穴＋五行で読む（大会と同じ）<small>「手の太陰肺経　合水穴」→ 尺沢を取る</small></button>
@@ -304,7 +313,7 @@ table.list{width:100%;border-collapse:collapse;font-size:15px}
         <summary>遊び方</summary>
         <div class="rules">
           <p>読み札は日本鍼灸師会の要穴カルタ大会や市販の『経穴かるた』と同じ形です。「手の太陰肺経」と経絡名を読み、一呼吸おいて「井木穴」と五兪穴を読みます。取り札には穴名（少商）だけが書いてあり、読み札の文字は取り終わるまで画面に出ません。</p>
-          <p>場には一つの経絡の<b>井・栄・兪・経・合</b>の五枚が並びます。読み上げを聞いて、当てはまる札をできるだけ早くタップします。五枚取り終わると次の経絡に進みます。五行は陰経が井木・栄火・兪土・経金・合水、陽経が井金・栄水・兪木・経火・合土です。</p>
+          <p>場には一つの経絡の<b>井・栄・兪・経・合</b>の五枚が並びます。読み上げを聞いて、当てはまる札をできるだけ早くタップします。場に一枚残ったら、その札（残り札）は読まずに次の経絡に進みます。「一度に並べる経絡」を2・3にすると、10枚・15枚を並べて取ります。この場合は経絡名もよく聞かないと取れません。五行は陰経が井木・栄火・兪土・経金・合水、陽経が井金・栄水・兪木・経火・合土です。</p>
           <p><b>1人・タイムアタック</b>：読み始めから正しい札を取るまでの時間を合計します。お手付きは設定した秒数が足されます。記録は経絡の範囲・読み方・札の扱いごとに自己ベストとして残ります。</p>
           <p><b>CPUと対戦／2人で対戦</b>：先に正しい札を取った方の一枚。お手付きをすると、その読みではもう取れません。二人ともお手付きなら、その札は流れます。取った枚数の多い方が勝ちです。</p>
           <p>2人対戦は、iPadを机に置いて向かい合わせで遊びます。奥の人の札と文字は逆さに表示されます。</p>
@@ -368,10 +377,10 @@ const RAW = [
  ['SI','手の太陽小腸経','てのたいようしょうちょうけい','小腸経',0,'少沢:しょうたく 前谷:ぜんこく 後渓:こうけい 陽谷:ようこく 小海:しょうかい'],
  ['BL','足の太陽膀胱経','あしのたいようぼうこうけい','膀胱経',0,'至陰:しいん 足通谷:あしのつうこく 束骨:そっこつ 崑崙:こんろん 委中:いちゅう'],
  ['KI','足の少陰腎経','あしのしょういんじんけい','腎経',1,'湧泉:ゆうせん 然谷:ねんこく 太渓:たいけい 復溜:ふくりゅう 陰谷:いんこく'],
- ['PC','手の厥陰心包経','てのけっちんしんぽうけい','心包経',1,'中衝:ちゅうしょう 労宮:ろうきゅう 大陵:だいりょう 間使:かんし 曲沢:きょくたく'],
+ ['PC','手の厥陰心包経','てのけついんしんぽうけい','心包経',1,'中衝:ちゅうしょう 労宮:ろうきゅう 大陵:だいりょう 間使:かんし 曲沢:きょくたく'],
  ['TE','手の少陽三焦経','てのしょうようさんしょうけい','三焦経',0,'関衝:かんしょう 液門:えきもん 中渚:ちゅうしょ 支溝:しこう 天井:てんせい'],
  ['GB','足の少陽胆経','あしのしょうようたんけい','胆経',0,'足竅陰:あしのきょういん 侠渓:きょうけい 足臨泣:あしのりんきゅう 陽輔:ようほ 陽陵泉:ようりょうせん'],
- ['LR','足の厥陰肝経','あしのけっちんかんけい','肝経',1,'大敦:だいとん 行間:こうかん 太衝:たいしょう 中封:ちゅうほう 曲泉:きょくせん'],
+ ['LR','足の厥陰肝経','あしのけついんかんけい','肝経',1,'大敦:だいとん 行間:こうかん 太衝:たいしょう 中封:ちゅうほう 曲泉:きょくせん'],
 ];
 const MER = RAW.map(([id,name,kana,short,yin,pts]) => ({id,name,kana,short,yin:!!yin,
   pts: pts.split(' ').map(s => { const [n,r] = s.split(':'); return {n,r}; })}));
@@ -390,7 +399,7 @@ const READ_LABEL = {std:'井木穴（大会形式）',yoketsu:'井穴（五兪�
 
 // ===== 保存 =====
 const LSKEY = 'yoketsu-karuta:v1';
-const DEF = {players:'1',opp:'none',name1:'',name2:'',mers:MER.map(m=>m.id),order:'flow',read:'std',
+const DEF = {players:'1',opp:'none',name1:'',name2:'',mers:MER.map(m=>m.id),order:'flow',group:'1',read:'std',
   voice:'on',voiceURI:'',rate:0.8,pause:'1',arrange:'shuffle',keep:'remove',furi:'off',penalty:'3',se:'on'};
 function load(){
   try{
@@ -581,6 +590,10 @@ function startGame(){
        seq, si:-1, score:[0,0], faults:[0,0], pen:0, total:0, log:[], running:false, accepting:false,
        cur:null, stage:null, timers:new Set(), t0Game:Date.now()};
   G.ta = !G.two && !G.cpu;
+  // 一度に並べる経絡の数ごとに組を作る（流注順なら隣どうしの経絡が同じ組になる）
+  G.gsize = Math.max(1, Number(s.group) || 1);
+  G.groups = [];
+  for (let i = 0; i < seq.length; i += G.gsize) G.groups.push(seq.slice(i, i + G.gsize));
   const scr = $('#scr-game');
   scr.classList.toggle('two', G.two); scr.classList.toggle('one', !G.two); scr.classList.toggle('solo', G.ta);
   $('#nameA').textContent = name1();
@@ -596,13 +609,16 @@ function startGame(){
 function boards(){ return G.two ? [[$('#boardA'),0],[$('#boardB'),1]] : [[$('#boardA'),0]]; }
 function layoutBoards(){
   if (!G || !G.stage) return;
-  const maxLen = Math.max(...G.stage.m.pts.map(p => p.n.length));
+  const cardsOn = G.stage.cards;
+  const n = cardsOn.length;
+  const maxLen = Math.max(...cardsOn.map(c => c.m.pts[c.k].n.length));
   for (const [el] of boards()){
     const W = el.clientWidth, H = el.clientHeight;
     if (!W || !H) continue;
-    const gap = Math.round(Math.max(8, Math.min(W, H) * .022));
-    let best = {w:0,c:5};
-    for (const [c,r] of [[5,1],[3,2],[2,3]]){
+    const gap = Math.round(Math.max(6, Math.min(W, H) * (n > 5 ? .016 : .022)));
+    let best = {w:0,c:n};
+    for (let c = 1; c <= n; c++){
+      const r = Math.ceil(n / c);
       const w = Math.min((W - gap*(c-1)) / c, (H - gap*(r-1)) / r / 1.4);
       if (w > best.w) best = {w, c};
     }
@@ -618,20 +634,21 @@ function layoutBoards(){
 addEventListener('resize', () => layoutBoards());
 
 function renderBoards(){
-  const st = G.stage, m = st.m, furi = G.s.furi === 'on';
+  const st = G.stage, furi = G.s.furi === 'on', multi = G.gsize > 1;
   for (const [el, p] of boards()){
     const box = el.querySelector('.cards');
     box.innerHTML = '';
     el.classList.remove('locked');
-    st.order.forEach((k, i) => {
+    st.order.forEach((card, i) => {
+      const {m, k, id} = card;
       const pt = m.pts[k];
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'card deal'; b.dataset.k = k;
-      b.style.setProperty('--d', (i * 70) + 'ms');
+      b.type = 'button'; b.className = 'card deal'; b.dataset.id = id;
+      b.style.setProperty('--d', (i * (multi ? 35 : 70)) + 'ms');
       b.setAttribute('aria-label', pt.n);
-      b.innerHTML = `<span class="nm">${furi ? `<ruby>${pt.n}<rt>${pt.r}</rt></ruby>` : pt.n}</span><span class="tag">${fullName(m,k)}</span>`;
-      b.addEventListener('pointerdown', e => { e.preventDefault(); tap(p, k, b); });
-      b.addEventListener('click', e => { if (e.detail === 0) tap(p, k, b); });
+      b.innerHTML = `<span class="nm">${furi ? `<ruby>${pt.n}<rt>${pt.r}</rt></ruby>` : pt.n}</span><span class="tag">${multi ? m.short + ' ' : ''}${fullName(m,k)}</span>`;
+      b.addEventListener('pointerdown', e => { e.preventDefault(); tap(p, id, b); });
+      b.addEventListener('click', e => { if (e.detail === 0) tap(p, id, b); });
       b.addEventListener('animationend', () => b.classList.remove('deal','miss'));
       box.appendChild(b);
     });
@@ -646,7 +663,7 @@ function updateBars(){
   if (G.ta){
     const left = G.stage ? G.stage.left.size : 5;
     $('#scoreA').innerHTML = `${G.score[0]}${unit}`;
-    $('#faultA').textContent = `お手付き ${G.faults[0]}` + (G.pen ? `（＋${G.pen/1000}秒）` : '') + `・この経の残り ${left}枚`;
+    $('#faultA').textContent = `お手付き ${G.faults[0]}` + (G.pen ? `（＋${G.pen/1000}秒）` : '') + `・場の残り ${left}枚`;
   } else {
     $('#scoreA').innerHTML = `${G.score[0]}${unit}`; $('#scoreB').innerHTML = `${G.score[1]}${unit}`;
     $('#faultA').textContent = `お手付き ${G.faults[0]}`; $('#faultB').textContent = G.two ? `お手付き ${G.faults[1]}` : '';
@@ -660,25 +677,28 @@ function flash(p, text, good){
 
 function nextStage(){
   G.si++;
-  if (G.si >= G.seq.length) return finish();
-  const m = G.seq[G.si];
-  const order = [0,1,2,3,4];
-  if (G.s.arrange === 'shuffle') shuffle(order);
-  G.stage = {m, order, left:new Set(order), reads:shuffle([0,1,2,3,4]), ri:-1};
-  $('#stage-no').textContent = `${G.si+1} / ${G.seq.length} 経`;
-  $('#stage-name').textContent = m.name;
-  setYomi(`<small>第${G.si+1}経</small>${m.name}`);
+  if (G.si >= G.groups.length) return finish();
+  const ms = G.groups[G.si];
+  const cards = [];
+  for (const m of ms) for (let k = 0; k < 5; k++) cards.push({m, k, id:`${m.id}-${k}`});
+  const order = G.s.arrange === 'shuffle' ? shuffle([...cards]) : cards;
+  G.stage = {ms, cards, order, left:new Set(cards.map(c => c.id)), reads:shuffle([...cards]), ri:-1};
+  const unit = G.gsize > 1 ? '組' : '経';
+  const label = ms.length > 1 ? ms.map(m => m.short).join('・') : ms[0].name;
+  $('#stage-no').textContent = `${G.si+1} / ${G.groups.length} ${unit}`;
+  $('#stage-name').textContent = label;
+  setYomi(`<small>第${G.si+1}${unit}</small>${label}`);
   renderBoards(); updateBars();
-  later(1500, nextRead);
+  later(G.gsize > 1 ? 2000 : 1500, nextRead);
 }
 
 function nextRead(){
   const st = G.stage; st.ri++;
-  if (st.ri >= 5) return later(400, nextStage);
-  const k = st.reads[st.ri];
+  if (st.ri >= st.cards.length - 1) return restCard(); // 場に1枚残ったら、その札は読まずに次へ
+  const {m, k, id} = st.reads[st.ri];
   const type = G.s.read === 'mix' ? ['std','yoketsu','gogyo'][Math.floor(Math.random()*3)] : G.s.read;
-  const ph = phrase(st.m, k, type);
-  G.cur = {k, type, ...ph, locked:[false,false], done:false, t0:now(), fh:[0,0], cpuT:null};
+  const ph = phrase(m, k, type);
+  G.cur = {m, k, id, type, ...ph, locked:[false,false], done:false, t0:now(), fh:[0,0], cpuT:null};
   // 音声で読むときは、取り終わるまで読み札の文字を一切出さない
   const textOn = G.s.voice !== 'on' || !hasTTS;
   setYomi(textOn ? esc(ph.text) : '<span class="wait">読み上げ中…</span>');
@@ -690,6 +710,20 @@ function nextRead(){
     onend: () => { if (G && G.cur === cur && !cur.done && G.cpu) scheduleCpu(cur); },
   });
 }
+// 読まれなかった最後の1枚。答えだけ見せて次の経絡に進む
+function restCard(){
+  const st = G.stage;
+  const id = [...st.left][0];
+  G.cur = null; G.accepting = false; G.running = false;
+  if (id === undefined) return later(400, nextStage);
+  const {m, k} = st.cards.find(c => c.id === id);
+  setYomi(`<small>残り札</small>${m.pts[k].n}<small style="margin-left:14px;margin-right:0">${G.gsize > 1 ? m.short + ' ' : ''}${fullName(m,k)}</small>`);
+  for (const [el] of boards()){
+    const c = el.querySelector(`.card[data-id="${id}"]`);
+    if (c) c.classList.add('hit');
+  }
+  later(1300, nextStage);
+}
 function replay(){
   if (!G || !G.cur || G.cur.done) return;
   unlockAudio();
@@ -700,12 +734,12 @@ function scheduleCpu(cur){
   cur.cpuT = later(c.base + Math.random() * c.jit, () => { if (G.cur === cur && !cur.done) resolve(1); });
 }
 
-function tap(p, k, el){
+function tap(p, id, el){
   if (!G || !G.accepting || !G.cur || G.cur.done) return;
   const cur = G.cur;
   if (cur.locked[p]) return;
   cur.tapped = true;
-  if (k === cur.k) return resolve(p);
+  if (id === cur.id) return resolve(p);
   // お手付き
   G.faults[p]++; cur.fh[p]++;
   seFault();
@@ -725,7 +759,7 @@ function tap(p, k, el){
 }
 
 function resolve(who){
-  const cur = G.cur, st = G.stage, m = st.m;
+  const cur = G.cur, st = G.stage, m = cur.m;
   if (cur.done) return;
   cur.done = true; G.accepting = false; G.running = false;
   const ms = now() - cur.t0;
@@ -746,13 +780,13 @@ function resolve(who){
   updateBars();
   const keep = G.s.keep === 'keep';
   for (const [el, p] of boards()){
-    const c = el.querySelector(`.card[data-k="${cur.k}"]`);
+    const c = el.querySelector(`.card[data-id="${cur.id}"]`);
     if (c) c.classList.add('hit');
   }
   later(750, () => {
     for (const [el, p] of boards()){
       el.classList.remove('locked');
-      const c = el.querySelector(`.card[data-k="${cur.k}"]`);
+      const c = el.querySelector(`.card[data-id="${cur.id}"]`);
       if (!c) continue;
       c.classList.remove('hit');
       if (!keep){
@@ -760,7 +794,7 @@ function resolve(who){
         setTimeout(() => c.classList.add('gone'), 430);
       }
     }
-    st.left.delete(cur.k); updateBars();
+    st.left.delete(cur.id); updateBars();
     later(keep ? 450 : 650, nextRead);
   });
 }
@@ -786,15 +820,22 @@ function quit(){
 }
 
 // ===== 終了・結果 =====
-function catKey(s){ return [MER.filter(m=>s.mers.includes(m.id)).map(m=>m.id).join('.'), s.read, s.keep, s.arrange].join('|'); }
+// r4 = 1経につき4枚読む版（最後の1枚は読まない）。5枚とも読んでいた頃の記録とは別に並べる
+// 6番目は一度に並べる経絡の数。並べ方の順（流注順・ランダム）は1経絡のときだけ記録に影響しない
+function catKey(s){
+  const g = s.group || '1';
+  return [MER.filter(m=>s.mers.includes(m.id)).map(m=>m.id).join('.'), s.read, s.keep, s.arrange, 'r4', g + (g !== '1' && s.order === 'random' ? 'r' : '')].join('|');
+}
 function rangeLabel(ids){
   if (ids.length === 12) return '全12経';
   const names = ids.map(id => MERI[id].short);
   return names.length <= 4 ? names.join('・') : `${names.length}経（${names.slice(0,3).join('・')}ほか）`;
 }
 function catLabel(key){
-  const [r, read, keep, arr] = key.split('|');
-  return `${rangeLabel(r.split('.'))}／${READ_LABEL[read]}で読む／${keep === 'keep' ? '札を残す' : '札が消える'}${arr === 'fixed' ? '／井→合の順' : ''}`;
+  const [r, read, keep, arr, ver, grp = '1'] = key.split('|');
+  const g = parseInt(grp, 10) || 1;
+  const gl = g > 1 ? `／${g}経絡ずつ並べる${grp.endsWith('r') ? '（ランダムな組）' : ''}` : '';
+  return `${rangeLabel(r.split('.'))}${gl}／${READ_LABEL[read]}で読む／${keep === 'keep' ? '札を残す' : '札が消える'}${arr === 'fixed' ? '／井→合の順' : ''}${ver === 'r4' ? '' : '（旧：5枚とも読む版）'}`;
 }
 
 function finish(){
@@ -825,7 +866,7 @@ function finish(){
       </div>`;
   } else if (!g.two){
     const [a, b] = g.score, res = a > b ? '勝ち' : a < b ? '負け' : '引き分け';
-    store.history.unshift({mode:'cpu', level:g.cpu, names:[name1(), 'CPU'], score:[a,b], faults:g.faults, range:rangeLabel(g.seq.map(m=>m.id)), read:g.s.read, date});
+    store.history.unshift({mode:'cpu', level:g.cpu, names:[name1(), 'CPU'], score:[a,b], faults:g.faults, range:rangeLabel(g.seq.map(m=>m.id)) + (g.gsize > 1 ? `（${g.gsize}経絡ずつ）` : ''), read:g.s.read, date});
     html = `
       <div class="verdict"><div class="lab">CPU（${CPU[g.cpu].label}）との対戦</div><div class="big">${res}</div>
         <div class="badge ${a > b ? '' : 'dim'}">${esc(name1())} ${a}枚 − ${b}枚 CPU</div></div>
@@ -837,7 +878,7 @@ function finish(){
       </div>`;
   }
   if (g.two){
-    store.history.unshift({mode:'2p', names:[name1(), name2()], score:g.score, faults:g.faults, range:rangeLabel(g.seq.map(m=>m.id)), read:g.s.read, date});
+    store.history.unshift({mode:'2p', names:[name1(), name2()], score:g.score, faults:g.faults, range:rangeLabel(g.seq.map(m=>m.id)) + (g.gsize > 1 ? `（${g.gsize}経絡ずつ）` : ''), read:g.s.read, date});
   }
   store.history = store.history.slice(0, 40);
   save();
@@ -871,7 +912,7 @@ function sheetHtml(g){
   const rows = g.seq.map(m => {
     const cells = [0,1,2,3,4].map(k => {
       const l = g.log.find(x => x.mer === m.id && x.k === k);
-      if (!l) return `<td><span class="n">${m.pts[k].n}</span></td>`;
+      if (!l) return `<td><span class="n">${m.pts[k].n}</span><span class="t">残り札</span></td>`;
       const bad = l.fh[0] + l.fh[1] > 0 || (!g.two && l.who !== 0);
       const cls = bad ? 'bad' : slow.has(m.id + '-' + k) ? 'slow' : '';
       const dot = g.two || g.cpu ? `<span class="who" style="background:${l.who === 0 ? 'var(--p1)' : l.who === 1 ? 'var(--p2)' : 'transparent'}"></span>` : '';
